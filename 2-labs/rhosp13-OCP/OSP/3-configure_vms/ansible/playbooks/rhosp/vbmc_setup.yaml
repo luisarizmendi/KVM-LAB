@@ -1,0 +1,102 @@
+---
+- hosts: undercloud
+  remote_user: stack
+  gather_facts: True
+
+  tasks:
+    - name: Copy public key a {{ libvirt_server }}
+      delegate_to: 127.0.0.1
+      connection: local
+      #remote_user: "{{ local_user }}"
+      shell: |
+        ssh-keygen -R {{ ansible_host }}
+        ssh-keygen -R {{ libvirt_server }}
+        echo $(ssh -o StrictHostKeyChecking=no  root@{{ ansible_host }} "cat /root/.ssh/id_rsa.pub") > pubkey
+        scp -o StrictHostKeyChecking=no pubkey  root@{{ libvirt_server }}:/root/pubkey
+        ssh -o StrictHostKeyChecking=no  root@{{ libvirt_server }} "cat /root/pubkey >> /root/.ssh/authorized_keys"
+        rm -f pubkey
+
+
+    - name: Prepare vbmc config
+      become: yes
+      shell: |
+        curl -o /tmp/python2-virtualbmc-1.2.0-1.el7.noarch.rpm http://mirror.centos.org/centos/7/cloud/x86_64/openstack-queens/python2-virtualbmc-1.2.0-1.el7.noarch.rpm
+        yum install -y  /tmp/python2-virtualbmc-1.2.0-1.el7.noarch.rpm
+        yum install -y crudini
+        mkdir -p /etc/virtualbmc/
+        touch /etc/virtualbmc/virtualbmc.conf
+        touch /var/log/virtualbmc.log
+        crudini --set /etc/virtualbmc/virtualbmc.conf log debug true
+        crudini --set /etc/virtualbmc/virtualbmc.conf log logfile /var/log/virtualbmc.log
+
+
+    - name: Disable SSH StrictHostKeyChecking
+      become: yes
+      copy:
+        dest: "~/.ssh/config"
+        content: |
+          Host *
+            StrictHostKeyChecking no
+
+
+    - name: Configure vbmc ports
+      become: yes
+      shell: "vbmc add {{ item.name  }} --port {{ item.port }} --username {{ vbmc_username }} --password {{ vbmc_password }} --libvirt-uri qemu+ssh://root@{{ libvirt_server }}/system"
+      with_items: "{{ overcloud_vms }}"
+      ignore_errors: true
+
+    - name: Create vbmc-ports.service
+      become: yes
+      copy:
+        dest: "/etc/systemd/system/vbmc-ports.service"
+        content: |
+          [Unit]
+          Description=Manage pre-configured vbmc ports
+          After=network.target
+          [Service]
+          Type=forking
+          ExecStart=/usr/local/sbin/vbmc-ports.sh
+          TimeoutStartSec=0
+          [Install]
+          WantedBy=default.target
+
+
+
+
+    - name: Create file vbmc-ports.sh
+      become: yes
+      shell: |
+        touch /usr/local/sbin/vbmc-ports.sh
+        echo '#!/bin/bash' > /usr/local/sbin/vbmc-ports.sh
+
+
+    - name: Configure  vbmc-ports.sh content
+      become: yes
+      shell: "echo 'vbmc start {{ item.name  }}' >> /usr/local/sbin/vbmc-ports.sh"
+      with_items: "{{ overcloud_vms }}"
+      ignore_errors: true
+
+
+    - name: Enable vbmc service
+      become: yes
+      shell: |
+        chmod +x /usr/local/sbin/vbmc-ports.sh
+        systemctl daemon-reload
+        systemctl enable vbmc-ports.service
+        systemctl restart vbmc-ports.service
+
+
+    - name: Open IPTABLES vbmc ports
+      become: yes
+      shell: "iptables -I INPUT -p udp --dport {{ item.port }} -m state --state NEW  -j ACCEPT"
+      with_items: "{{ overcloud_vms }}"
+
+#    - name: Enable forwarding
+#      become: yes
+#      shell: "iptables -I FORWARD 1  -d 0.0.0.0/0 -j ACCEPT"
+
+
+
+    - name: Save IPTABLES
+      become: yes
+      shell: "iptables-save |sudo tee /etc/sysconfig/iptables"

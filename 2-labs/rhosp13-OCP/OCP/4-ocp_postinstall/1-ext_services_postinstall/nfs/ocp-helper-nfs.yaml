@@ -1,0 +1,70 @@
+---
+- hosts: helper
+  gather_facts: no
+
+
+  tasks:
+  - name: Install needed packages
+    yum:
+      state: latest
+      name: "{{ item }}"
+    with_items:
+      - nfs-utils
+      - rpcbind
+
+  - name: Create users
+    user:
+      name: "{{ item }}"
+    with_items:
+      - glance
+      - cinder
+
+
+  - name: Create mountable dirs
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: 0777
+      owner: nfsnobody
+      group: nfsnobody
+    with_items:
+      - /export
+      - /export/osp/
+      - /export/ocp/
+      - /export/osp/glance
+      - /export/osp/cinder
+      - /export/ocp/static
+      - /export/ocp/dynamic
+
+
+  - name: Change owners cinder
+    file:
+      path: /export/osp/cinder
+      state: directory
+      owner: cinder
+      group: cinder
+
+  - name: Change owners glance
+    file:
+      path: /export/osp/glance
+      state: directory
+      owner: glance
+      group: glance
+
+
+  - name: FIX permissions
+    shell: |
+      chmod  777 /export/*
+
+  - name: Configure /etc/exports
+    copy:
+      dest: "/etc/exports"
+      content: |
+        /export/osp *(no_root_squash,rw,sync,insecure)
+        /export/ocp	*(rw,sync,root_squash)
+
+  - name: Enable nfs-server
+    systemd:
+      name: nfs-server
+      state: restarted
+      enabled: True

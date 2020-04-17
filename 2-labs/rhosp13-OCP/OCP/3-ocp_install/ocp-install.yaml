@@ -1,0 +1,28 @@
+---
+- hosts: installer
+  remote_user: "{{ remote_user_installer }}"
+
+  tasks:
+    - name: Install the OCP cluster
+      shell: |
+        sshKey=$(cat ~/.ssh/id_rsa.pub)
+        sed -i "s#sshKey:.*#sshKey: \'$sshKey\'#g" {{ install_path }}/install/install-config.yaml
+        /usr/local/bin/openshift-install create cluster --log-level=debug --dir={{ install_path }}/install/
+
+
+
+#    - name: Waiting bootstrap to complete
+#      command: "/usr/local/bin/openshift-install wait-for bootstrap-complete --log-level debug --dir {{ install_path }}/install/ "
+#      register: bootstrap_status
+#      retries: 60
+#      delay: 60
+#      until: bootstrap_status.rc == 0
+
+
+
+#    - name: Waiting OCP install to complete
+#      command: "/usr/local/bin/openshift-install wait-for install-complete --log-level debug --dir {{ install_path }}/install/ "
+#      register: bootstrap_status
+#      retries: 60
+#      delay: 60
+#      until: bootstrap_status.rc == 0

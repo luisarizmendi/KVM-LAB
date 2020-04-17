@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Download image {{ image_name }}
+      get_url:
+        url: "{{ image_url }}"
+        dest: "/var/lib/libvirt/bases/{{ image_name }}"

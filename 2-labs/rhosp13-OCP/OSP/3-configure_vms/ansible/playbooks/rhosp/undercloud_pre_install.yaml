@@ -1,0 +1,55 @@
+---
+- hosts: undercloud
+  remote_user: root
+  gather_facts: False
+
+  tasks:
+
+  - name: Add stack user
+    user:
+      name: stack
+      password: $1$misalt$LRP0QGk7KtBkeAbMFVIVB1
+      shell: /bin/bash
+      home: /home/stack
+      comment: "Undercloud Admin"
+
+  - name: Allow 'stack' to have passwordless sudo
+    lineinfile:
+      dest: /etc/sudoers.d/stack
+      create: yes
+      mode: 0440
+      state: present
+      regexp: '^%stack'
+      line: '%stack ALL=(root) NOPASSWD: ALL'
+      validate: 'visudo -cf %s'
+
+  - name: Create directory .ssh
+    file:
+      path: /home/stack/.ssh
+      state: directory
+      owner: stack
+      group: stack
+
+  - name: Create file .ssh/authorized_keys
+    file:
+      dest: "/home/stack/.ssh/authorized_keys"
+      owner: stack
+      group: stack
+      state: touch
+
+  - name: Add authorized SSH keys
+    shell: "cat /root/.ssh/authorized_keys > /home/stack/.ssh/authorized_keys"
+
+  - name: Create directory images
+    file:
+      path: /home/stack/images
+      state: directory
+      owner: stack
+      group: stack
+
+  - name: Create directory templates
+    file:
+      path: /home/stack/templates
+      state: directory
+      owner: stack
+      group: stack

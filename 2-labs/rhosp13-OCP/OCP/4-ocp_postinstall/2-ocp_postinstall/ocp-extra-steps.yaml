@@ -1,0 +1,29 @@
+---
+- hosts: installer
+  remote_user: stack
+
+  tasks:
+
+
+    - name: Copy kubeconfig for admin
+      shell: "mkdir /home/stack/.kube ; cp {{ install_path }}/install/auth/kubeconfig /home/stack/.kube/config "
+
+
+    - name: Copy post-install scripts
+      copy:
+        src: "{{ post_install_script }}"
+        dest: "{{ install_path }}/"
+
+
+
+#    - name: Configure NFS autoprovisioner (not supported, only for PoC)
+#      shell: "cd {{ install_path }}/post-install/nfs-autoprovisioner/  ; chmod +x run.sh ; ./run.sh "
+
+
+#    - name: Configure certificates
+#      shell: "cd /home/stack/post-install/certificates/  ; chmod +x run.sh ; ./run.sh "
+
+
+
+    - name: Configure authentication
+      shell: "cd {{ install_path }}/post-install/authentication/  ; chmod +x run.sh ; ./run.sh "

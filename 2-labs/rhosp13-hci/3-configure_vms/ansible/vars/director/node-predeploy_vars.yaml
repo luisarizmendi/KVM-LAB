@@ -1,0 +1,7 @@
+wait_reboot: 900
+ssh_port: 22
+enabled_repos: "--enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-13-rpms --enable=rhel-7-server-rhceph-3-tools-rpms"
+subs_activationkey: SECRET
+subs_orgid: SECRET
+subs_pool: SECRET
+timezone: Europe/Madrid

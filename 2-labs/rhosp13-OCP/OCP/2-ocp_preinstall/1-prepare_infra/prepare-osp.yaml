@@ -1,0 +1,19 @@
+---
+- hosts: installer
+  remote_user: stack
+
+  tasks:
+    - name: Copy adminrc
+      copy:
+        src: adminrc
+        dest: "~/adminrc"
+
+    - name: Copy script
+      copy:
+        src: run.sh
+        dest: "~/run.sh"
+
+    - name: Run script
+      shell: |
+        chmod +x ~/run.sh
+        ./run.sh {{ platform.openstack.externalNetwork }} {{ platform.openstack.lbFloatingIP }}

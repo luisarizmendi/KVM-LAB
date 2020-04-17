@@ -1,0 +1,61 @@
+parameter_defaults:
+
+#  CloudDomain: lablocal
+#  CloudName: rhosp.lablocal
+#  CloudNameCtlplane: rhosp.ctlplane.lablocal
+#  CloudNameInternal: rhosp.internalapi.lablocal
+#  CloudNameStorage: rhosp.storage.lablocal
+#  CloudNameStorageManagement: rhosp.storagemgmt.lablocal
+
+  ControllerHostnameFormat: 'controller-%index%'
+  ComputeHostnameFormat: 'compute-%index%'
+  ComputeHCIHostnameFormat: 'computehci-%index%'
+  CephStorageHostnameFormat: 'ceph-osd-%index%'
+
+  ControllerCount: 3
+#  OvercloudControllerFlavor: control
+
+  ComputeCount: 0
+#  OvercloudComputeFlavor: compute
+
+  ComputeHCICount: 3
+#  OvercloudComputeHCIFlavor: computehci
+
+  CephStorageCount: 0
+#  OvercloudCephStorageFlavor: ceph-storage
+
+#######################################################################
+# In order to not having to deploy twice for fencing, I just fix nodes
+#######################################################################
+
+  OvercloudControllerFlavor: baremetal
+  OvercloudComputeFlavor: baremetal
+  OvercloudComputeHCIFlavor: baremetal
+  OvercloudCephStorageFlavor: baremetal
+
+  ControllerSchedulerHints:
+    'capabilities:node': 'controller-%index%'
+  ComputeSchedulerHints:
+    'capabilities:node': 'compute-%index%'
+  ComputeHCISchedulerHints:
+    'capabilities:node': 'computehci-%index%'
+  CephStorageSchedulerHints:
+    'capabilities:node': 'ceph-osd-%index%'
+
+
+  HostnameMap:
+    controller-0: controller-0
+    controller-1: controller-1
+    controller-2: controller-2
+    compute-0: compute-0
+    compute-1: compute-1
+    compute-2: compute-2
+    compute-3: compute-3
+    computehci-0: computehci-0
+    computehci-1: computehci-1
+    computehci-2: computehci-2
+    computehci-3: computehci-3
+    ceph-osd-0: ceph-osd-0
+    ceph-osd-1: ceph-osd-1
+    ceph-osd-2: ceph-osd-2
+    ceph-osd-3: ceph-osd-3

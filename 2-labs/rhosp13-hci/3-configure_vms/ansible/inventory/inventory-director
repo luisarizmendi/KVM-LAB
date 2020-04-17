@@ -1,0 +1,4 @@
+[nodes]
+director.lablocal  ansible_host=192.168.245.13  
+[undercloud]
+director.lablocal  ansible_host=192.168.245.13  ansible_hostname=director.lablocal

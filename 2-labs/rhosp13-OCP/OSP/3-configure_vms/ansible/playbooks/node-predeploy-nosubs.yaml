@@ -1,0 +1,63 @@
+---
+- hosts: nodesnosub
+  remote_user: root
+  become: yes
+
+  tasks:
+  - name: Set Timezone
+    shell: "timedatectl set-timezone {{ timezone }}"
+
+  - name: Ensure hostname set
+    hostname: name={{ inventory_hostname }}
+    when: not inventory_hostname|match('(\d{1,3}\.){3}\d{1,3}')
+
+#  - name: Ensure local hostname is in /etc/hosts
+#    lineinfile:
+#      dest: /etc/hosts
+#      line:  "127.0.0.1\tlocalhost\t{{ ansible_nodename }}\t{{ ansible_hostname }}"
+#      regexp: '^127\.0\.0\.1\s+'
+#      insertbefore: BOF
+
+  - name: Ensure hostname is in /etc/hosts
+    lineinfile:
+      dest: /etc/hosts
+      line:  "{{ ansible_host }}\t{{ ansible_nodename }}\t{{ ansible_hostname }}"
+      insertbefore: BOF
+
+
+
+#  - name: Register subscriptions
+#    redhat_subscription:
+#      state: present
+#      activationkey: "{{ subs_activationkey }}"
+#      org_id: "{{ subs_orgid }}"
+#      pool: "{{ subs_pool }}"
+#
+#  - name: Disable all RHSM repositories
+#    shell: "sudo subscription-manager repos --disable=*"
+#    ignore_errors: true
+#
+#  - name: Enable required repositories
+#    shell: "sudo subscription-manager repos {{ enabled_repos }}"
+
+  - name: Upgrade all packages
+    yum:
+      name: "*"
+      state: latest
+
+  - name: Install TMUX and libguestfs-tools
+    yum:
+      state: latest
+      name: "{{ item }}"
+    with_items:
+      - tmux
+      - libguestfs-tools
+
+  - name: "Rebooting ..."
+    shell: sleep 3 && shutdown -r now
+    async: 1
+    poll: 0
+    ignore_errors: true
+
+  - name: Wait for machine to restart. If this is baremetal it can take a while...
+    local_action: wait_for host={{ ansible_host }} delay=15 port=22 timeout=120 state=started

@@ -1,0 +1,47 @@
+---
+- hosts: helper
+  remote_user: "{{ ocp.installer.remote_user_installer }}"
+
+  tasks:
+    - name: Create OpenShift artifacts directories
+      file:
+        path: "/opt/openshift-{{ item }}-{{ ocp.installer.openshift_version }}"
+        state: directory
+        mode: u+rwx,g-rx,o-rx
+      with_items:
+      - images
+      - ignition
+
+
+
+    - name: Upload ignition files
+      copy:
+        src: "~/tmp/ignition-files/"
+        dest: /var/www/html/ignition
+
+
+    - name: SELinux restorecon
+      shell: |
+        restorecon -vR /var/www/html/
+
+
+    - name: Download RHCOS ISO image, compressed metal BIOS, kernel and initramfs files
+      shell: |
+        curl --compressed -J -L -o /opt/openshift-images-{{ ocp.installer.openshift_version }}/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-installer.iso {{ ocp.installer.rhcos_location }}/{{ ocp.installer.coreos_version }}/latest/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-installer.x86_64.iso
+        curl --compressed -J -L -o /opt/openshift-images-{{ ocp.installer.openshift_version }}/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-metal.raw.gz {{ ocp.installer.rhcos_location }}/{{ ocp.installer.coreos_version }}/latest/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-metal.x86_64.raw.gz
+        curl --compressed -J -L -o /opt/openshift-images-{{ ocp.installer.openshift_version }}/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-installer-kernel {{ ocp.installer.rhcos_location }}/{{ ocp.installer.coreos_version }}/latest/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-installer-kernel-x86_64
+        curl --compressed -J -L -o /opt/openshift-images-{{ ocp.installer.openshift_version }}/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-installer-initramfs.img {{ ocp.installer.rhcos_location }}/{{ ocp.installer.coreos_version }}/latest/rhcos-{{ ocp.installer.coreos_version_minor }}-x86_64-installer-initramfs.x86_64.img
+      args:
+        warn: false
+
+
+    - name: Upload the compressed metal BIOS file and the kernel and initramfs files to your HTTP server
+      shell: |
+        mkdir -p /var/www/html/images
+        cp /opt/openshift-images-{{ ocp.installer.openshift_version }}/* /var/www/html/images/
+
+#    - name: Copy PXE files
+#      copy:
+#        src: "{{ ocp.installer.local_install_files_path }}/pxe/"
+#        dest: "/var/lib/tftpboot/pxelinux.cfg/"
+#        mode: '0555'

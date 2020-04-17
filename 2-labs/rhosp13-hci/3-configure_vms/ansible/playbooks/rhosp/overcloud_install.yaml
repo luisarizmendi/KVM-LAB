@@ -1,0 +1,30 @@
+---
+- hosts: undercloud
+  remote_user: stack
+  gather_facts: False
+
+  tasks:
+  - name: Prepare baremetal nodes
+    shell: |
+      source ~/stackrc
+      openstack overcloud node import ~/instackenv.json
+      sleep 5
+      for i in $(openstack baremetal node list -c UUID -f value); do openstack baremetal node power off $i;done
+      sleep 5
+      openstack overcloud node introspect --all-manageable --provide
+      chmod +x ~/scripts/*
+      bash ~/scripts/undercloud_add_baremetal_metadata.sh
+
+  - name: Launch Overcloud install
+    shell: |
+      chmod +x ~/scripts/*
+      ~/scripts/overcloud_deploy.sh
+
+#  - name: Fence Controllers and Computes (for instance HA)
+#    shell: |
+#      source ~/stackrc
+#      openstack overcloud generate fencing --ipmi-lanplus --ipmi-level administrator --output templates/environments/98-fencing.yaml instackenv.json
+#      ~/scripts/overcloud_deploy.sh
+
+  - name: Configure test resources
+    shell:  ~/scripts/overcloud_after_deploy_test.sh  

@@ -1,0 +1,238 @@
+---
+- hosts: installer
+  remote_user: "{{ ocp.installer.remote_user_installer }}"
+
+  tasks:
+
+    - name: Install Podman and git
+      yum:
+        state: latest
+        name: "{{ item }}"
+      with_items:
+        - podman
+        - git
+
+
+    - name: Ensure api hostname entry is in /etc/hosts
+      become: true
+      lineinfile:
+        dest: /etc/hosts
+        line:  "{{ ocp.cluster.vip_api }}\tapi.{{ ocp.cluster.clusterid }}.{{ ocp.cluster.domain }}"
+        insertbefore: BOF
+
+
+
+    - name: Change interface script
+      become: true
+      lineinfile:
+        dest: "/etc/sysconfig/network-scripts/ifcfg-{{ mgmt_if }}"
+        regexp: '^(.*)DNS1(.*)$'
+        line: "DNS1={{ ocp.installer.dns }}"
+
+#    - name: Change running /etc/resolv.conf
+#      become: true
+#      lineinfile:
+#        dest: /etc/resolv.conf
+#        regexp: '^(.*)nameserver(.*)$'
+#        line: "nameserver {{  ocp.installer.dns  }}"
+
+    - name: Be sure that we are using the right DNS
+      become: true
+      shell: |
+        sed -i "/nameserver.*/d" /etc/resolv.conf
+        echo "nameserver {{  ocp.installer.dns  }}" >> /etc/resolv.conf
+
+
+
+
+    - name: Create installation directory
+      file:
+        path: "{{ ocp.installer.install_path }}/install"
+        state: directory
+        owner: "{{ ocp.installer.remote_user_installer }}"
+        group: "{{ ocp.installer.remote_user_installer }}"
+
+
+
+    - name: Create post-installation directory
+      file:
+        path: "{{ ocp.installer.install_path }}/post-install"
+        state: directory
+        owner: "{{ ocp.installer.remote_user_installer }}"
+        group: "{{ ocp.installer.remote_user_installer }}"
+
+
+
+    - name: Copy post-install scripts
+      copy:
+        src: "{{ ocp.installer.local_postinstall_files_path }}/"
+        dest: "{{ ocp.installer.install_path }}/post-install/"
+
+
+
+
+    - name: Create OpenShift artifacts directories
+      file:
+        path: "{{ ocp.installer.install_path }}/artifacts/openshift-{{ item }}-{{ ocp.installer.openshift_version }}"
+        state: directory
+        mode: u+rwx,g-rx,o-rx
+        owner: "{{ ocp.installer.remote_user_installer }}"
+        group: "{{ ocp.installer.remote_user_installer }}"
+      with_items:
+      - installer
+      - client
+
+
+    - name: Download Openshift installer
+      unarchive:
+        src: "{{ ocp.installer.openshift_location }}/{{ ocp.installer.openshift_version }}/openshift-install-linux-{{ ocp.installer.openshift_version }}.tar.gz"
+        dest: "{{ ocp.installer.install_path }}/artifacts/openshift-installer-{{ ocp.installer.openshift_version }}/"
+        remote_src: yes
+        creates: "{{ ocp.installer.install_path }}/artifacts/openshift-installer-{{ ocp.installer.openshift_version }}/openshift-install"
+
+    - name: Download Openshift client
+      unarchive:
+        src: "{{ ocp.installer.openshift_location }}/{{ ocp.installer.openshift_version }}/openshift-client-linux-{{ ocp.installer.openshift_version }}.tar.gz"
+        dest: "{{ ocp.installer.install_path }}/artifacts/openshift-client-{{ ocp.installer.openshift_version }}/"
+        remote_src: yes
+        creates: "{{ ocp.installer.install_path }}/artifacts/openshift-client-{{ ocp.installer.openshift_version }}/oc"
+
+    - name: Create a symbolic link
+      become: yes
+      file:
+        src: "{{ item.value }}"
+        dest: "{{ item.key }}"
+        state: link
+        force: yes
+      with_dict:
+        "/usr/local/bin/oc": "{{ ocp.installer.install_path }}/artifacts/openshift-client-{{ ocp.installer.openshift_version }}/oc"
+        "/usr/local/bin/kubectl": "{{ ocp.installer.install_path }}/artifacts/openshift-client-{{ ocp.installer.openshift_version }}/kubectl"
+        "/usr/local/bin/openshift-install": "{{ ocp.installer.install_path }}/artifacts/openshift-installer-{{ ocp.installer.openshift_version }}/openshift-install"
+
+
+
+
+
+############# TOOLS
+
+
+
+    - name: Downloading filetranspiler source
+      shell: |
+        mkdir -p ~/utils
+        yum install -y python3 PyYAML
+        curl -o filetranspile https://raw.githubusercontent.com/ashcrow/filetranspiler/master/filetranspile
+        sed -i 's/import yaml/#import yaml/' filetranspile
+        chmod 0555 filetranspile
+        mv filetranspile /usr/local/bin/filetranspiler
+
+ 
+
+    - name: Copy extra scripts
+      copy:
+        src: "{{ ocp.installer.local_install_files_path }}/scripts/"
+        dest: "~/scripts"
+        mode: +x
+
+
+
+############# Config installer
+
+
+
+    - name: Copy install-config.yaml
+      copy:
+        src: "{{ ocp.installer.local_install_files_path }}/install-config.yaml"
+        dest: "{{ ocp.installer.install_path }}/install-config.yaml"
+        owner: "{{ ocp.installer.remote_user_installer }}"
+        group: "{{ ocp.installer.remote_user_installer }}"
+
+
+    - name: Include ssh key
+      shell: |
+        ssh-keygen -t rsa -N "" -f /root/.ssh/id_rsa
+        sshKey=$(cat ~/.ssh/id_rsa.pub)
+        sed -i "s#sshKey:.*#sshKey: \'$sshKey\'#g" {{ ocp.installer.install_path }}/install-config.yaml
+
+
+
+
+    - name: Copy install-config.yaml in install dir
+      shell: |
+        cp {{ ocp.installer.install_path }}/install-config.yaml {{ ocp.installer.install_path }}/install/install-config.yaml
+
+
+
+
+#    - name: Create manifests files
+#      shell: |
+#        /usr/local/bin/openshift-install create manifests --dir={{ ocp.installer.install_path }}/install/
+
+
+
+    - name: Create ignition files
+      shell: |
+        /usr/local/bin/openshift-install create ignition-configs --dir={{ ocp.installer.install_path }}/install/
+
+
+
+
+
+
+
+
+############# ignition customizations
+
+
+    - name: Copy string for include user on ignition file
+      copy:
+        src: "{{ ocp.installer.local_install_files_path }}/ignition/ignition_userpasswd"
+        dest: /tmp/ignition_userpasswd
+
+
+
+    - name: Include local user in ignition files
+      shell: |
+        cd {{ ocp.installer.install_path }}/install/
+        for i in $((find . -maxdepth 1 -type f | grep ign$) | cut -d'/' -f2 | grep -v boot)
+        do
+          mv $i $i.original ; touch $i
+          echo "$(cat  $i.original | awk -F '"passwd":' '{print $1}')\"passwd\":{\"users\":[$(cat /tmp/ignition_userpasswd)]},\"storage\":{},\"systemd\":{}}" > $i
+        done
+        bootstrapname=$((find . -maxdepth 1 -type f | grep ign$) | cut -d'/' -f2 | grep boot)
+        mv $bootstrapname $bootstrapname.original ; touch $bootstrapname
+        echo "$(cat  $bootstrapname.original | awk -F ']},"storage":' '{print $1}'),$(cat /tmp/ignition_userpasswd)]},\"storage\":$(cat  $bootstrapname.original | awk -F ']},"storage":' '{print $2}')" > $bootstrapname
+
+
+
+    - name: Copy to master ignitions
+      copy:
+        remote_src: yes
+        src: "{{ ocp.installer.install_path }}/install/master.ign"
+        dest: "{{ ocp.installer.install_path }}/install/{{ item.name }}.ign"
+      loop: "{{  nodes.masters  }}"
+
+
+    - name: Copy to worker ignitions
+      copy:
+        remote_src: yes
+        src: "{{ ocp.installer.install_path }}/install/worker.ign"
+        dest: "{{ ocp.installer.install_path }}/install/{{ item.name  }}.ign"
+      loop: "{{  nodes.workers }}"
+
+
+    - local_action: command mkdir -p ~/tmp/ignition-files
+
+
+    - shell: "(cd {{ ocp.installer.install_path }}/install/; find . -maxdepth 1 -type f | grep ign$) | cut -d'/' -f2"
+      register: files_to_copy
+
+
+    - name: Get ignition files
+      fetch:
+        src: "{{ ocp.installer.install_path }}/install/{{ item }}"
+        dest: ~/tmp/ignition-files/
+        flat: yes
+      with_items: "{{ files_to_copy.stdout_lines }}"
+
+

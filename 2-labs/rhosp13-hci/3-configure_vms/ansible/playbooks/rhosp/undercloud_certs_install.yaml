@@ -1,0 +1,24 @@
+---
+- hosts: undercloud
+  remote_user: stack
+  gather_facts: False
+
+  tasks:
+  - name: Add the user 'haproxy'
+    become: yes
+    user:
+      name: haproxy
+
+  - name: Copy cacert and certificate files
+    become: yes
+    shell: |
+      cp  /home/stack/certs/undercloud/undercloud.pem /etc/pki/tls/certs/undercloud.pem
+      chown haproxy:haproxy /etc/pki/tls/certs/undercloud.pem
+      chmod 0640 /etc/pki/tls/certs/undercloud.pem
+      cp /home/stack/certs/undercloud/undercloud-cacert.pem /etc/pki/ca-trust/source/anchors/cm-local-ca.pem
+      chown root:root /etc/pki/ca-trust/source/anchors/cm-local-ca.pem
+      chmod 0644 /etc/pki/ca-trust/source/anchors/cm-local-ca.pem
+
+  - name: Inject cacert trust
+    become: yes
+    shell: "sudo update-ca-trust extract"

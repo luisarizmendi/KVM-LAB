@@ -1,0 +1,149 @@
+---
+- hosts: localhost
+  vars_files:
+  - ../config.yaml
+  tasks:
+    - name: Installing KVM Packages
+      yum:
+        name:
+          - "@virtualization-hypervisor"
+          - "@virtualization-client"
+          - "@virtualization-platform"
+          - "@virtualization-tools"
+          # ansible virt need lxml
+          - python-lxml
+          # ansible route53 need  python-boto
+          - python-boto
+          # ansible k8s need python2-openshift
+          - python2-openshift
+          - cloud-utils
+        state: present
+
+    # Update qemu to +2.4 because option fw_cfg added in 2.4
+    #  "qemu-kvm: -fw_cfg: invalid option"
+    #  https://github.com/qemu/qemu/commit/81b2b81062612e
+    - name: Add repos centos-release-openstack-stein
+      yum:
+        name: centos-release-openstack-stein
+        state: present
+
+    - name: Disable all openstack repos except centos-qemu-ev
+      command: "yum-config-manager -q --disable centos-ceph-nautilus centos-nfs-ganesha28 centos-openstack-stein"
+
+    - name: Upgrade all packages, include update qemu-kvm to >2.4
+    # because we added repo centos-qemu-ev from openstack
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Enable nested virtualization
+      ignore_errors: yes
+      become: true
+      shell: |
+        cat > /etc/modprobe.d/kvm-nested.conf << EOF
+        options kvm-intel nested=1
+        options kvm-intel enable_shadow_vmcs=1
+        options kvm-intel enable_apicv=1
+        options kvm-intel ept=1
+        EOF
+        modprobe -r kvm_intel
+        modprobe -a kvm_intel
+
+
+    - name: Enable and Start libvirtd
+      systemd:
+        name: libvirtd
+        state: started
+        enabled: yes
+
+    - name: Verify KVM module is loaded
+      shell: "lsmod | grep -i kvm"
+      register: result
+      failed_when: "result.rc != 0"
+
+
+    - name: Create a directory for base images
+      file:
+        path: /var/lib/libvirt/bases
+        state: directory
+
+    - name: Create storage pool for base images
+      shell: |
+        virsh pool-define-as bases dir - - - - "/var/lib/libvirt/bases"
+        virsh pool-build bases
+        virsh pool-start bases
+        virsh pool-autostart bases
+        virsh pool-refresh bases
+
+
+    - name: Create a directory for VMs
+      file:
+        path: /var/lib/libvirt/vms
+        state: directory
+
+    - name: Create storage pool for VMs
+      shell: |
+        virsh pool-define-as vms dir - - - - "/var/lib/libvirt/vms"
+        virsh pool-build vms
+        virsh pool-start vms
+        virsh pool-autostart vms
+
+    - name: Copy image {{ image_name }}
+      copy:
+        src: "../SECRETS/RHEL-QCOW2/{{ image_name }}"
+        dest: "/var/lib/libvirt/bases/{{ image_name }}"
+
+
+    - name: Create SSH key for root
+      copy:
+        src: "../SECRETS/id_rsa"
+        dest: "/root/.ssh/id_rsa"
+        owner: root
+        group: root
+        mode: '0600'
+
+
+    - name: Ansible create file with content example
+      copy:
+        mode: '0400'
+        dest: "~/.ssh/config"
+        content: |
+          Host *
+              StrictHostKeyChecking no
+
+    - shell: |
+        ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+        cat ~/.ssh/id_rsa.pub >>  ~/.ssh/authorized_keys
+
+    - name: Delete default network
+      ignore_errors: yes
+      shell: |
+        virsh net-destroy --network default
+        virsh net-undefine --network default
+
+    - name: Restart libvirtd
+      systemd:
+        name: libvirtd
+        state: restarted
+        enabled: yes
+
+    - name: line insert
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "net.ipv4.ip_forward = 1"
+        insertbefore: BOF
+
+    - name: Finish Host network configuration
+      ignore_errors: yes
+      shell: |
+        sudo iptables -t nat -I POSTROUTING 1 -o {{ int_external }} -j MASQUERADE
+        sudo iptables-save > /etc/sysconfig/iptables
+        sudo sysctl -p
+        sudo systemctl restart network
+
+
+
+
+    - name: Wait for machine to restart network
+      pause:
+        seconds: 15

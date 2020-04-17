@@ -1,0 +1,12 @@
+---
+- hosts: helper
+  remote_user: root
+  become: yes
+
+  tasks:
+
+
+    - name: Remove bootstrap node from Load Balancer
+      shell: |
+        sed -i '/bootstrap/d' /etc/haproxy/haproxy.cfg
+        systemctl restart haproxy

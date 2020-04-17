@@ -1,0 +1,20 @@
+---
+- hosts: installer
+  gather_facts: no
+
+
+  tasks:
+  - name: Change interface script
+    become: true
+    replace:
+      path: /etc/sysconfig/network-scripts/ifcfg-eth1
+      regexp: 'DNS1=8.8.8.8'
+      replace: "DNS1={{ helper.ipaddr }}"
+
+
+  - name: Change running /etc/resolv.conf
+    become: true
+    replace:
+      path: /etc/resolv.conf
+      regexp: 'nameserver 8.8.8.8'
+      replace: "nameserver {{ helper.ipaddr }}"

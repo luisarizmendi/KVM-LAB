@@ -1,0 +1,115 @@
+---
+
+rhel:
+  enabled_repos: "--enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms "
+  subs_activationkey: SECRET
+  subs_orgid: SECRET
+  subs_pool: SECRET
+  timezone: Europe/Madrid
+
+
+
+
+
+nodes:
+  bootstrap:
+    name: "bootstrap"
+    ipaddr: "1.50.20.20"
+    netmask: "255.255.255.0"
+    gw: "1.50.20.1"
+    mgmtif: "ens3"
+    macaddr: "52:54:60:60:72:67"
+    disk: "vda"
+  masters:
+    - name: "master0"
+      ipaddr: "1.50.20.21"
+      netmask: "255.255.255.0"
+      gw: "1.50.20.1"
+      mgmtif: "ens3"
+      macaddr: "52:54:60:e7:9d:67"
+      disk: "vda"
+    - name: "master1"
+      ipaddr: "1.50.20.22"
+      netmask: "255.255.255.0"
+      gw: "1.50.20.1"
+      mgmtif: "ens3"
+      macaddr: "52:54:60:80:16:23"
+      disk: "vda"
+    - name: "master2"
+      ipaddr: "1.50.20.23"
+      netmask: "255.255.255.0"
+      gw: "1.50.20.1"
+      mgmtif: "ens3"
+      macaddr: "52:54:60:d5:1c:39"
+      disk: "vda"
+  workers:
+    - name: "worker0"
+      ipaddr: "1.50.20.11"
+      netmask: "255.255.255.0"
+      gw: "1.50.20.1"
+      mgmtif: "ens3"
+      macaddr: "52:54:60:f4:26:a1"
+      disk: "vda"
+    - name: "worker1"
+      ipaddr: "1.50.20.12"
+      netmask: "255.255.255.0"
+      gw: "1.50.20.1"
+      mgmtif: "ens3"
+      macaddr: "52:54:60:82:90:00"
+      disk: "vda"
+#    - name: "worker2"
+#      ipaddr: "1.50.20.13"
+#      netmask: "255.255.255.0"
+#      gw: "1.50.20.1"
+#      mgmtif: "ens3"
+#      macaddr: "52:54:60:8e:10:34"
+#      disk: "vda"
+
+helper:
+  vm:
+    name: "helper"
+    ipaddr: "1.50.20.3"
+
+  dhcp:
+    router: "1.50.20.1"
+    bcast: "1.50.20.255"
+    netmask: "255.255.255.0"
+    poolstart: "1.50.20.10"
+    poolend: "1.50.20.30"
+    ipid: "1.50.20.0"
+    netmaskid: "255.255.255.0"
+    dns: "1.50.20.3"
+    domainname: "{{ metadata.name }}.{{ baseDomain }}"
+    networkifacename: eth0
+    ipaddr: "1.50.20.3"
+
+  dns:
+    domain: "{{ baseDomain }}"
+    clusterid: "{{ metadata.name }}"
+    forwarder1: "8.8.8.8"
+    forwarder2: "8.8.4.4"
+
+  http:
+    ip: "1.50.20.3"
+    port: "8080"
+
+
+
+ocp:
+  installer:
+    remote_user_installer: root
+    install_path: "/root/ocp"
+    openshift_version: "4.3.9"
+    openshift_location: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
+    rhcos_location: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos"
+    coreos_version: "4.3"
+    coreos_version_minor: "4.3.8"
+    local_install_files_path: "../../OCP-files/ocp-install-files"
+    local_postinstall_files_path: "../../OCP-files/ocp-postinstall-files"
+    dns: "{{ helper.vm.ipaddr }}"
+  cluster:
+    domain: "{{ baseDomain }}"
+    clusterid: "{{ metadata.name }}"
+    vip_api: 1.50.20.3
+    vip_api_int: 1.50.20.3
+    vip_apps: 1.50.20.3

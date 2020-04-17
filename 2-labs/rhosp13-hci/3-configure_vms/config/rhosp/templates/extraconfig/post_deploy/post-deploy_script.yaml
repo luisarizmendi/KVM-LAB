@@ -1,0 +1,24 @@
+heat_template_version: queens
+
+description: >
+  All Post deployment scripts
+
+parameters:
+  servers:
+    type: json
+
+resources:
+
+  PostDeployScriptConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: post_deploy_scripts/post-deploy_script.sh}
+
+  PostDeployScriptDeployments:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      name: ExtraDeployments
+      servers:  {get_param: servers}
+      config: {get_resource: PostDeployScriptConfig}
+      actions: ['CREATE','UPDATE']

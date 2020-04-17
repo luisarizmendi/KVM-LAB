@@ -1,0 +1,28 @@
+heat_template_version: queens
+description: 'Extra Pre-Deployment Config, multiple'
+parameters:
+  server:
+    type: string
+
+# Note depends_on may be used for serialization if ordering is important
+resources:
+
+  PreDeployScript:
+    type: pre_deploy/pre-deploy_script.yaml
+    properties:
+        server: {get_param: server}
+
+
+  RedHatSubscription:
+    type: pre_deploy/rhel-registration.yaml
+    properties:
+        server: {get_param: server}
+
+
+outputs:
+  deploy_stdout:
+    value:
+      list_join:
+      - ''
+      - - {get_attr: [PreDeployScript, deploy_stdout]}
+        - {get_attr: [RedHatSubscription, deploy_stdout]}

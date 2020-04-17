@@ -1,0 +1,21 @@
+heat_template_version: queens
+description: 'Extra Post-Deployment Config, multiple'
+parameters:
+  servers:
+    type: json
+
+
+# Note depends_on may be used for serialization if ordering is important
+resources:
+  PostDeployScript:
+    type: post_deploy/post-deploy_script.yaml
+    properties:
+        servers: {get_param: servers}
+
+
+outputs:
+  deploy_stdout:
+    value:
+      list_join:
+      - ''
+      - - {get_attr: [PostDeployScript, deploy_stdout]}

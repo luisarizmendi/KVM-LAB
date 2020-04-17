@@ -1,0 +1,9 @@
+---
+
+terraform_release: "0.11.14"
+#terraform_provider_libvirt: "https://download.opensuse.org/repositories/systemsmanagement:/terraform/CentOS_7/x86_64/terraform-provider-libvirt-0.5.1-11.1.x86_64.rpm"
+terraform_provider_libvirt: "https://github.com/dmacvicar/terraform-provider-libvirt/releases/download/v0.5.2/terraform-provider-libvirt-0.5.2.Fedora_28.x86_64.tar.gz"
+
+image_name: "rhel-server-7.6-x86_64-kvm.qcow2"
+
+int_external: "eno1"

@@ -1,0 +1,12 @@
+overcloud_vms:
+  - { name: A-0 , port: 6230 }
+  - { name: A-1 , port: 6231 }
+  - { name: A-2 , port: 6232 }
+  - { name: C-0 , port: 6250 }
+  - { name: C-1 , port: 6251 }
+  - { name: C-2 , port: 6252 }
+  - { name: D-0 , port: 6260 }
+  - { name: D-1 , port: 6261 }
+vbmc_username: SECRET
+vbmc_password: SECRET
+libvirt_server: SECRET

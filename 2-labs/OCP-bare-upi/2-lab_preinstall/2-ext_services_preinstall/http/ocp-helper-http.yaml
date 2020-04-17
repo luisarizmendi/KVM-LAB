@@ -1,0 +1,56 @@
+---
+- hosts: helper
+  gather_facts: no
+
+
+  tasks:
+
+
+  - name: Install needed packages
+    yum:
+      name:
+        - httpd
+      state: present
+
+
+  - name: Copy httpd conf file
+    copy:
+      src: files/httpd.conf
+      dest: /etc/httpd/conf/httpd.conf
+    notify:
+      - restart httpd
+
+
+  - name: Create apache directories for installing
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: 0755
+    with_items:
+      - /var/www/html/install
+      - /var/www/html/ignition
+
+  - name: Best effort SELinux repair - Apache
+    shell: "restorecon -vR /var/www/html || true"
+
+
+  - name: Systemd daemon reload
+    systemd:
+      daemon_reload: yes
+
+
+  - name: Starting services
+    service:
+      name: "{{ item }}"
+      enabled: yes
+      state: restarted
+    with_items:
+      - httpd
+
+
+
+  handlers:
+  - name: restart httpd
+    service:
+      name: httpd
+      state: restarted

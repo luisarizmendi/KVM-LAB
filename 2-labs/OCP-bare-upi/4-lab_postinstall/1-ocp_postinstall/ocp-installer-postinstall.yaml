@@ -1,0 +1,41 @@
+---
+- hosts: installer
+  remote_user: "{{ ocp.installer.remote_user_installer }}"
+
+  tasks:
+
+    - name: Waiting bootstrap to complete
+      command: "/usr/local/bin/openshift-install wait-for bootstrap-complete --dir {{ ocp.installer.install_path }}/install --log-level debug"
+      register: bootstrap_status
+      retries: 60
+      delay: 60
+      until: bootstrap_status.rc == 0
+
+
+    - local_action: command virsh destroy ocp-bootstrap
+
+
+    - pause:
+        minutes: 5
+
+    - name: Copy kubeconfig for admin
+      shell: "mkdir ~/.kube ; cp {{ ocp.installer.install_path }}/install/auth/kubeconfig ~/.kube/config "
+
+
+    - name: Approving the CSRs
+      shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; done"
+
+
+
+#    - name: Configure NFS backend for Registry
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/nfs-registry/  ; chmod +x run.sh ; ./run.sh "
+
+
+
+
+    - name: Waiting OCP install to complete
+      command: "/usr/local/bin/openshift-install wait-for install-complete --dir {{ ocp.installer.install_path }}/install --log-level debug"
+      register: bootstrap_status
+      retries: 60
+      delay: 120
+      until: bootstrap_status.rc == 0

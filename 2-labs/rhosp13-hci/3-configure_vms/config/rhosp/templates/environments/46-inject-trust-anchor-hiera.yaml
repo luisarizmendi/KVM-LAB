@@ -1,0 +1,78 @@
+# *******************************************************************
+# This file was created automatically by the sample environment
+# generator. Developers should use `tox -e genconfig` to update it.
+# Users are recommended to make changes to a copy of the file instead
+# of the original, if any customizations are needed.
+# *******************************************************************
+# title: Inject SSL Trust Anchor on Overcloud Nodes
+# description: |
+#   When using an SSL certificate signed by a CA that is not in the default
+#   list of CAs, this environment allows adding a custom CA certificate to
+#   the overcloud nodes.
+parameter_defaults:
+  # Map containing the CA certs and information needed for deploying them.
+  # Type: json
+  CAMap:
+    overcloud-cacert:
+      content: |
+        -----BEGIN CERTIFICATE-----
+        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
+        qf0=
+        -----END CERTIFICATE-----
+
+
+
+# from /etc/pki/ca-trust/source/anchors/cm-local-ca.pem
+#    undercloud-cacert:
+#      content: |
+#        -----BEGIN CERTIFICATE-----
+#        MIIDjTCCAnWgAwIBAgIQSukYNruJTd+OZyLEHUaIuTANBgkqhkiG9w0BAQsFADBQ
+#        MSAwHgYDVQQDDBdMb2NhbCBTaWduaW5nIEF1dGhvcml0eTEsMCoGA1UEAwwjNGFl
+#        OTE4MzYtYmI4OTRkZGYtOGU2NzIyYzQtMWQ0Njg4YjkwHhcNMTgwODA4MDc1OTU1
+#        WhcNMTkwODA4MDc1OTU1WjBQMSAwHgYDVQQDDBdMb2NhbCBTaWduaW5nIEF1dGhv
+#        cml0eTEsMCoGA1UEAwwjNGFlOTE4MzYtYmI4OTRkZGYtOGU2NzIyYzQtMWQ0Njg4
+#        YjkwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDythWG7n8ficPFh6ly
+#        U8bjkg/fSpgyHfnSSoFnnMPeJ3r71o4ZKzx8Y8dCpsaSN140rxsA6gVQS5Ce4Kb4
+#        2y7Ft1IYR0CYF7RKHBwTZTVa2Trk67YDS3rkeYxmsApJdzdIYpJbcQoyIIEXEFus
+#        uqvHmkgZlwtR4DrqGrenhIfIanZnJPJPIUvHj6ZXFBryCn+o0BSGm2U3MjYuP3I0
+#        HA++HtPWAIdC2TceMzm31BjMcRsNP93jQC3+3Zr14KVrYlK4y0HqCr79LHcgKQo7
+#        KND6+3DuUQr3eNlHncUJzdaUdSkNUSV5btPxu5Bz0qWeK6LljU9AGcVsuZE4Mwoz
+#        DkWfAgMBAAGjYzBhMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFDyDfzPabHVM
+#        90ma894WQIkAyrWPMB8GA1UdIwQYMBaAFDyDfzPabHVM90ma894WQIkAyrWPMA4G
+#        A1UdDwEB/wQEAwIBhjANBgkqhkiG9w0BAQsFAAOCAQEAzycLJppY3Wi9qWamw3at
+#        KjC8R32uPvpU+f/SuFgi+nRsh2wpSh6CE+WHfOEkx3k6W6+yYqAV3Ds00ZChT4X3
+#        Qnb0OYzgmOmBXmkn+Zki0xKPBhKtci5bbJsFHvVCWd10gV1hFWJOjeAMaWkyObjZ
+#        u2hdy1VCAw4Q1tEYXHFN4G9G2iydgzNRhvcx5aR10icdwg7x/0vJzn9lbhMw3rMp
+#        koUhzchnD/vpxknTsrbL0JVRRNbHchTnoc5GKUx0CxnT7stkE2q6Hqc/qFeCfWjf
+#        EfKaOPNlAj8mz/eE7SxFAOxH86Crc2o9WZ2A+QCtlAGHkKpvlG+xLeYwKX3SzLFY
+#        bA==
+#        -----END CERTIFICATE-----

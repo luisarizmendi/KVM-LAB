@@ -1,0 +1,76 @@
+---
+- hosts: undercloud
+  remote_user: stack
+  gather_facts: False
+
+  tasks:
+  - name: Install needed packages
+    become: yes
+    yum:
+      state: latest
+      name: "{{ item }}"
+    with_items:
+      - python-tripleoclient
+      - ceph-ansible
+
+  - name: Run undercloud installation
+    remote_user: stack
+    shell: "openstack undercloud install"
+
+
+  - name: If using rhos-release, refresh it
+    become: yes
+    shell: |
+      if ( rpm -q rhos-release ); then
+        rhos-release -x
+        rhos-release {{ RHOS_VERSION }}-director
+      fi
+
+  - name: Download overcloud images
+    yum:
+      state: latest
+      name: "{{ item }}"
+    with_items:
+      - rhosp-director-images
+      - rhosp-director-images-ipa
+    become: yes
+
+  - name: Creates directory
+    file:
+      path: /home/stack/images/
+      state: directory
+
+  - name: untar images
+    shell: "for i in $(ls /usr/share/rhosp-director-images/overcloud-full-latest*) $(ls /usr/share/rhosp-director-images/ironic-python-agent-latest-*); do tar -xvf $i -C /home/stack/images/; done"
+
+  - name: If using rhos-release, add rhos-release to the overcloud-full image
+    shell: |
+      if ( rpm -q rhos-release ); then
+          virt-customize  -a ~/images/overcloud-full.qcow2 --run-command 'rpm -ivh http://rhos-release.virt.bos.redhat.com/repos/rhos-release/rhos-release-latest.noarch.rpm ; rhos-release {{ RHOS_VERSION }}-director'
+      fi
+    ignore_errors: true
+  - name: upload images
+    shell: "source /home/stack/stackrc ; openstack overcloud image upload --image-path /home/stack/images/"
+
+  - name: Set DNS on ctlplane-subnet
+    shell: "source /home/stack/stackrc ;  openstack subnet set --dns-nameserver {{ NAMESERVER }} ctlplane-subnet"
+
+  - name: Prepare container images
+    shell: |
+      openstack overcloud container image prepare \
+      --namespace={{ REGISTRY_NAMESPACE }} \
+        --roles-file /home/stack/templates/roles_data.yaml \
+        --push-destination={{ REGISTRY_IP_ADDRESS }} \
+        --prefix=openstack- \
+        --tag-from-label {version}-{release} \
+        --output-env-file={{ REGISTRY_ENV }} \
+        --output-images-file {{ REGISTRY_IMAGES }}  \
+        --environment-directory {{ ENV_PATH }}  \
+        --set ceph_namespace={{ CEPH_NAMESPACE }} \
+        --set ceph_image={{ CEPH_IMAGE }}
+
+  - name: Upload container images
+    shell: |
+      sudo openstack overcloud container image upload \
+        --config-file {{ REGISTRY_IMAGES }} \
+        --verbose

@@ -1,0 +1,4 @@
+[nodes]
+extservices.lablocal  ansible_host=192.168.245.251  ansible_user=stack ansible_become=true
+[extservices]
+extservices.lablocal  ansible_host=192.168.245.251  ansible_user=stack ansible_become=true 

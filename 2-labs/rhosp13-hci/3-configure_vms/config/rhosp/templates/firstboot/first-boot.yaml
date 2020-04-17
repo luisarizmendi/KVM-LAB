@@ -1,0 +1,80 @@
+heat_template_version: pike
+
+description: >
+  This do firstboot configuration
+
+parameters:
+  extra_username:
+    type: string
+    default: redhatstack
+  extra_username_pass:
+    type: string
+    default: $6$somesaltsalt$kK.nEcss6K201neKzVQFgcGiNg9kIAiWZyhZhKRs9zDAZ.w8aRWfEJpoUE23AdmdEHhE3jcuD7iv82qSEvtQC/
+  ControllerHostnameFormat:
+    type: string
+    default: ""
+  ComputeHostnameFormat:
+    type: string
+    default: ""
+  CephStorageHostnameFormat:
+    type: string
+    default: ""
+  ObjectStorageHostnameFormat:
+    type: string
+    default: ""
+  ComputeHCIHostnameFormat:
+    type: string
+    default: ""
+
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: timestamp}
+      - config: {get_resource: user_config}
+      - config: {get_resource: register_node_role}
+      - config: {get_resource: firstboot_scripts}
+
+  timestamp:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        runcmd:
+          - echo $(TZ=UTC date) > /root/.timestamp_firstboot
+
+  user_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        users:
+        - default
+        - name: {get_param: extra_username}
+          lock_passwd: false
+          passwd: {get_param: extra_username_pass}
+          sudo: ALL=(ALL) NOPASSWD:ALL
+
+  register_node_role:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config:
+        str_replace:
+          template: {get_file: first-boot_scripts/register_node_role.sh}
+          params:
+             _CTRL_FORMAT_: {get_param: ControllerHostnameFormat}
+             _CMPT_FORMAT_: {get_param: ComputeHostnameFormat}
+             _CHCI_FORMAT_: {get_param: ComputeHCIHostnameFormat}
+             _CEPH_FORMAT_: {get_param: CephStorageHostnameFormat}
+             _SWFT_FORMAT_: {get_param: ObjectStorageHostnameFormat}
+
+  firstboot_scripts:
+    type: OS::Heat::SoftwareConfig
+    depends_on: register_node_role
+    properties:
+      config: {get_file: first-boot_scripts/first-boot_script.sh}
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}

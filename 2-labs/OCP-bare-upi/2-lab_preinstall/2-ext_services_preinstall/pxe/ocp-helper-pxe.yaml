@@ -1,0 +1,95 @@
+---
+- hosts: helper
+  gather_facts: no
+
+
+  tasks:
+  - name: Install packages for PXE
+    yum:
+      name:
+        - syslinux
+        - tftp-server
+      state: present
+
+
+  - name: Create TFTP config
+    file:
+      path: /var/lib/tftpboot/pxelinux.cfg
+      state: directory
+      mode: 0755
+    notify:
+      - restart tftp
+
+  - name: Create TFTP RHCOS dir
+    file:
+      path: /var/lib/tftpboot/rhcos
+      state: directory
+      mode: 0755
+
+
+
+  - name: Copy over files needed for TFTP
+    shell: "cp -a /usr/share/syslinux/* /var/lib/tftpboot"
+
+
+  - name: Set the tftp file pre-procesed
+    template:
+      src: templates/all-default.j2
+      dest: /var/lib/tftpboot/pxelinux.cfg/all-default
+      mode: 0555
+    notify:
+      - restart tftp
+
+  - name: Installing PXE file extractor
+    copy:
+      src: files/extract-pxe-files.sh
+      dest: /usr/local/bin/extract-pxe-files
+      mode: '0555'
+
+
+  - name: Extract PXE files
+    shell: "/usr/local/bin/extract-pxe-files /var/lib/tftpboot/pxelinux.cfg/all-default /var/lib/tftpboot/pxelinux.cfg"
+
+
+
+  - name: Installing TFTP Systemd helper
+    copy:
+      src: files/start-tftp.sh
+      dest: /usr/local/bin/start-tftp.sh
+      mode: '0555'
+
+  - name: Installing TFTP Systemd unit file
+    copy:
+      src: files/helper-tftp.service
+      dest: /etc/systemd/system/helper-tftp.service
+      mode: '0655'
+
+  - name: Systemd daemon reload
+    systemd:
+      daemon_reload: yes
+
+
+
+  - name: Starting PXE services
+    service:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    with_items:
+      - tftp
+      - helper-tftp
+
+  - name: Unmasking Services
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      masked: no
+    with_items:
+      - tftp
+
+
+  handlers:
+  - name: restart tftp
+    service:
+      name: tftp
+      state: restarted

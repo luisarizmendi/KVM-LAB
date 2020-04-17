@@ -1,0 +1,31 @@
+authoritative;
+ddns-update-style interim;
+default-lease-time 14400;
+max-lease-time 14400;
+
+	option routers                  {{ helper.dhcp.router }};
+	option broadcast-address        {{ helper.dhcp.bcast }};
+	option subnet-mask              {{ helper.dhcp.netmask }};
+	option domain-name-servers      {{ helper.dhcp.dns }};
+	option domain-name              "{{ helper.dhcp.domainname }}";
+
+	subnet {{  helper.dhcp.ipid }} netmask {{  helper.dhcp.netmaskid }} {
+	interface {{  helper.dhcp.networkifacename }};
+     	pool {
+        	range {{ helper.dhcp.poolstart }} {{ helper.dhcp.poolend }};
+		# Static entries
+		host {{ nodes.bootstrap.name }} { hardware ethernet {{ nodes.bootstrap.macaddr }}; fixed-address {{ nodes.bootstrap.ipaddr }}; }
+{% for m in nodes.masters %}
+		host {{ m.name }} { hardware ethernet {{ m.macaddr }}; fixed-address {{ m.ipaddr }}; }
+{% endfor %}
+{% for w in nodes.workers %}
+		host {{ w.name }} { hardware ethernet {{ w.macaddr }}; fixed-address {{ w.ipaddr }}; }
+{% endfor %}
+		# this will not give out addresses to hosts not listed above
+		deny unknown-clients;
+
+		# this is PXE specific
+		filename "pxelinux.0";
+		next-server {{ helper.dhcp.ipaddr }};
+     	}
+}

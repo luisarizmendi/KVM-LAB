@@ -1,0 +1,32 @@
+---
+
+ingress_fip: 10.2.1.199
+
+helper:
+  name: "helper"
+  ipaddr: "192.168.245.199"
+  networkifacename: "eth0"
+dns:
+  domain: "ocp.lablocal"
+  clusterid: "ocponosp"
+  forwarder1: "8.8.8.8"
+  forwarder2: "8.8.4.4"
+
+
+remote_user_installer: stack
+install_path: "/home/stack/ocp"
+
+ocp_local_install_files_path: "../../3-ocp_install/ocp-install-files"
+
+
+openshift_location: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
+openshift_version: "4.2.0"
+
+rhcos_location: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos"
+coreos_version: "4.2"
+coreos_version_minor: "4.2.0"
+
+
+
+
+post_install_script: "../../4-ocp_postinstall/2-ocp_postinstall/post-install"

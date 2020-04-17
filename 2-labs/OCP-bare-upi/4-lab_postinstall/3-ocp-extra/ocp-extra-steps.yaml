@@ -1,0 +1,83 @@
+---
+- hosts: installer
+  remote_user: "{{ ocp.installer.remote_user_installer }}"
+
+  tasks:
+
+#    - name: Be sure that we are using the right DNS
+#      become: true
+#      shell: |
+#        sed -i "/nameserver.*/d" /etc/resolv.conf
+#        echo "nameserver {{  ocp.installer.dns  }}" >> /etc/resolv.conf
+
+
+    - name: Trust locally Ingress default CA
+      shell: |
+        while [[ $(/usr/local/bin/oc -n openshift-ingress get secret/router-certs-default | grep router-certs-default  > /dev/null ; echo $?) != "0" ]]; do echo "Waiting for router-certs-default object" && sleep 10; done
+        /usr/local/bin/oc -n openshift-ingress extract secret/router-certs-default
+        sudo cp tls.crt /etc/pki/ca-trust/source/anchors/ingress-cacert.pem
+        sudo chown root:root /etc/pki/ca-trust/source/anchors/ingress-cacert.pem
+        sudo chmod 0644 /etc/pki/ca-trust/source/anchors/ingress-cacert.pem
+        sudo update-ca-trust extract
+
+
+
+
+    - name: Configure Autocompletion
+      shell: "/usr/local/bin/oc completion bash > oc_bash_completion   ;  sudo cp oc_bash_completion /etc/bash_completion.d/"
+
+
+
+    - name: Configure NFS backend for Registry
+      shell: "cd {{ ocp.installer.install_path }}/post-install/nfs-registry/  ; chmod +x run.sh ; ./run.sh "
+
+
+
+#    - name: Configure NFS autoprovisioner (not supported, only for PoC)
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/nfs-autoprovisioner/  ; chmod +x run.sh ; ./run.sh "
+
+
+#    - name: Configure certificates
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/certificates/  ; chmod +x run.sh ; ./run.sh "
+
+
+
+
+#    - name: Configure authentication
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/authentication/  ; chmod +x run.sh ; ./run.sh "
+
+
+#    - pause:
+#        minutes: 5
+
+
+
+#    - name: Configure credentials for registry
+
+
+
+#    - name: Configure Cluster logging
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/cluster-logging   ; chmod +x run.sh ; ./run.sh "
+
+
+
+#    - name: Configure Metering
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/metering   ; chmod +x run.sh ; ./run.sh "
+
+
+#    - name: Configure CNV
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/cnv   ; chmod +x run.sh ; ./run.sh "
+
+
+
+#    - name: Configure Service Mesh
+#      shell: "cd {{ ocp.installer.install_path }}/post-install/service-mesh   ; chmod +x run.sh ; ./run.sh "
+
+
+
+
+#    - name: Deploy test app
+#      shell: |
+#        /usr/local/bin/oc new-project test   --display-name="test" --description="Sample test app"
+#        /usr/local/bin/oc project test
+#        /usr/local/bin/oc new-app https://github.com/sclorg/cakephp-ex -l name=test

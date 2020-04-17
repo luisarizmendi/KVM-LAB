@@ -1,0 +1,17 @@
+resource_registry:
+  OS::TripleO::Services::IronicApi: /usr/share/openstack-tripleo-heat-templates/docker/services/ironic-api.yaml
+  OS::TripleO::Services::IronicConductor: /usr/share/openstack-tripleo-heat-templates/docker/services/ironic-conductor.yaml
+  OS::TripleO::Services::NovaIronic: /usr/share/openstack-tripleo-heat-templates/docker/services/nova-ironic.yaml
+  OS::TripleO::Services::IronicPxe: /usr/share/openstack-tripleo-heat-templates/docker/services/ironic-pxe.yaml
+
+
+parameter_defaults:
+
+  NovaSchedulerDiscoverHostsInCellsInterval: 15
+
+  IronicCleaningDiskErase: metadata
+  #IronicDebug: true
+  # IronicEnabledDrivers:
+  #   - pxe_ipmitool
+  #   - pxe_drac
+  #   - pxe_ilo

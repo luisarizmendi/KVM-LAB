@@ -1,0 +1,57 @@
+---
+- hosts: localhost
+  vars_files:
+  - ../config.yaml
+  tasks:
+    - name: Installing KVM Packages
+      yum:
+        name:
+          - wget
+          - unzip
+
+    - name: Download Terraform
+      get_url:
+        url: "https://releases.hashicorp.com/terraform/{{terraform_release}}/terraform_{{terraform_release}}_linux_amd64.zip"
+        dest: "/tmp/terraform_{{terraform_release}}_linux_amd64.zip"
+
+
+    - name: Unarchive
+      unarchive:
+        src: "/tmp/terraform_{{terraform_release}}_linux_amd64.zip"
+        dest: /tmp
+        remote_src: yes
+
+    - name: Move terraform bin
+      command: mv /tmp/terraform /usr/local/bin/
+
+
+
+    - name: Download Terraform Libvirt provider
+      get_url:
+        url: "{{ terraform_provider_libvirt }}"
+        dest: /tmp/terraform_libvirt_provider.tar.gz
+
+
+    - name: Create a directory for provider
+      file:
+        path: /root/.terraform.d/plugins/linux_amd64
+        state: directory
+
+    - name: Unarchive
+      unarchive:
+        src: "/tmp/terraform_libvirt_provider.tar.gz"
+        dest: /root/.terraform.d/plugins/linux_amd64
+        remote_src: yes
+
+
+
+#    - name: Download Terraform Libvirt provider
+#      get_url:
+#        url: "{{ terraform_provider_libvirt }}"
+#        dest: "/tmp/terraform_libvirt_provider.rpm"
+
+
+#    - name: Install Terraform Libvirt provider
+#      yum:
+#        name: /tmp/terraform_libvirt_provider.rpm
+#        skip_broken: yes

@@ -1,0 +1,12 @@
+[rhelnodes]
+ocp-installer.136.243.40.222.nip.io  ansible_host=1.50.10.2 mgmt_if=eth0
+ocp-helper.136.243.40.222.nip.io  ansible_host=1.50.20.3 mgmt_if=eth0
+
+[centosnodes]
+
+[installer]
+ocp-installer.136.243.40.222.nip.io  ansible_host=1.50.10.2 mgmt_if=eth0
+
+
+[helper]
+ocp-helper.136.243.40.222.nip.io  ansible_host=1.50.20.3 mgmt_if=eth0

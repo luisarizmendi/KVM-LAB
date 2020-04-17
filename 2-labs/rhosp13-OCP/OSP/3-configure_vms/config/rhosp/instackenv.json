@@ -1,0 +1,64 @@
+{
+    "nodes":[
+        {
+            "mac":[
+                "52:54:00:38:a1:62"
+            ],
+            "cpu":"4",
+            "memory":"20480",
+            "disk":"45",
+            "name":"A-0",
+            "arch":"x86_64",
+            "pm_user": "SECRET",
+            "pm_addr": "192.168.24.1",
+            "pm_password": "SECRET",
+            "pm_port": "6230",
+            "pm_type": "pxe_ipmitool"
+          },
+          {
+            "mac":[
+                "52:54:00:47:7e:5a"
+            ],
+            "cpu":"10",
+            "memory":"40960",
+            "disk":"45",
+            "name":"C-0",
+            "arch":"x86_64",
+            "pm_user": "SECRET",
+            "pm_addr": "192.168.24.1",
+            "pm_password": "SECRET",
+            "pm_port": "6250",
+            "pm_type": "pxe_ipmitool"
+          },
+          {
+            "mac":[
+                "52:54:00:6e:01:05"
+            ],
+            "cpu":"10",
+            "memory":"40960",
+            "disk":"45",
+            "name":"C-1",
+            "arch":"x86_64",
+            "pm_user": "SECRET",
+            "pm_addr": "192.168.24.1",
+            "pm_password": "SECRET",
+            "pm_port": "6251",
+            "pm_type": "pxe_ipmitool"
+          },
+          {
+            "mac":[
+                "52:54:00:29:96:c0"
+            ],
+            "cpu":"10",
+            "memory":"40960",
+            "disk":"45",
+            "name":"C-2",
+            "arch":"x86_64",
+            "pm_user": "SECRET",
+            "pm_addr": "192.168.24.1",
+            "pm_password": "SECRET",
+            "pm_port": "6252",
+            "pm_type": "pxe_ipmitool"
+          }
+      ]
+}

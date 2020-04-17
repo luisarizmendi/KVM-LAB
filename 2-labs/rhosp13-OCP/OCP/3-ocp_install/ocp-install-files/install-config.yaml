@@ -1,0 +1,42 @@
+apiVersion: v1
+baseDomain: ocp.lablocal
+compute:
+- hyperthreading: Enabled
+  name: worker
+  platform:
+    openstack:
+      rootVolume:
+        size: 30
+        type: tripleo
+  replicas: 2
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  platform:
+    openstack:
+      rootVolume:
+        size: 30
+        type: tripleo
+  replicas: 1
+metadata:
+  creationTimestamp: null
+  name: ocponosp
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineCIDR: 10.70.0.0/16
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  openstack:
+    cloud: shiftstack
+    computeFlavor: ocp
+    externalNetwork: floating
+    lbFloatingIP: 10.2.1.250
+    octaviaSupport: "1"
+    region: ""
+    trunkSupport: "1"
+pullSecret: SECRET
+sshKey: SECRET

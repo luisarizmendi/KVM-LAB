@@ -1,0 +1,5 @@
+#!/usr/bin/env ansible-playbook
+---
+- import_playbook: 01-prepare-kvm.yaml
+
+- import_playbook: 02-prepare-terraform.yaml

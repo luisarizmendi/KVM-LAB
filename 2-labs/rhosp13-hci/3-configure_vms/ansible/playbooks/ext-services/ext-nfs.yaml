@@ -1,0 +1,66 @@
+---
+- hosts: extservices
+  remote_user: root
+  become: yes
+  gather_facts: False
+
+  tasks:
+  - name: Install needed packages
+    yum:
+      state: latest
+      name: "{{ item }}"
+    with_items:
+      - nfs-utils
+      - rpcbind
+
+  - name: Create users
+    user:
+      name: "{{ item }}"
+    with_items:
+      - glance
+      - cinder
+
+
+  - name: Create mountable dirs
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: root
+      group: root
+    with_items:
+      - /export
+      - /export/glance
+      - /export/cinder
+
+  - name: Change owners cinder
+    file:
+      path: /export/cinder
+      state: directory
+      owner: cinder
+      group: cinder
+
+  - name: Change owners glance
+    file:
+      path: /export/glance
+      state: directory
+      owner: glance
+      group: glance
+
+
+  - name: FIX permissions
+    shell: |
+      chmod  777 /export/*
+
+  - name: Configure /etc/exports
+    copy:
+      dest: "/etc/exports"
+      content: |
+        /export/cinder *(no_root_squash,rw,sync,insecure)
+        /export/glance *(no_root_squash,rw,sync,insecure)
+
+
+  - name: Enable nfs-server
+    systemd:
+      name: nfs-server
+      state: restarted
+      enabled: True

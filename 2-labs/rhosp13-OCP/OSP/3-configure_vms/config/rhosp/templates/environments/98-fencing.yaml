@@ -1,0 +1,44 @@
+parameter_defaults:
+  EnableFencing: true
+  FencingConfig:
+    devices:
+    - agent: fence_ipmilan
+      host_mac: 52:54:00:38:a1:62
+      params:
+        ipaddr: 192.168.24.1
+        ipport: '6230'
+        lanplus: true
+        login: SECRET
+        passwd: SECRET
+        pcmk_host_list: controller-0
+        privlvl: administrator
+    - agent: fence_ipmilan
+      host_mac: 52:54:00:47:7e:5a
+      params:
+        ipaddr: 192.168.24.1
+        ipport: '6250'
+        lanplus: true
+        login: SECRET
+        passwd: SECRET
+        pcmk_host_list: computehci-0
+        privlvl: administrator
+    - agent: fence_ipmilan
+      host_mac: 52:54:00:6e:01:05
+      params:
+        ipaddr: 192.168.24.1
+        ipport: '6251'
+        lanplus: true
+        login: SECRET
+        passwd: SECRET
+        pcmk_host_list: computehci-1
+        privlvl: administrator
+    - agent: fence_ipmilan
+      host_mac: 52:54:00:29:96:c0
+      params:
+        ipaddr: 192.168.24.1
+        ipport: '6252'
+        lanplus: true
+        login: SECRET
+        passwd: SECRET
+        pcmk_host_list: computehci-2
+        privlvl: administrator

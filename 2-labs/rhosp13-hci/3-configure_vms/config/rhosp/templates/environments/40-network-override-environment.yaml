@@ -1,0 +1,123 @@
+resource_registry:
+
+## CHECK BUG 1613267
+  OS::TripleO::Controller::Net::SoftwareConfig:  ../nic-config/controller.yaml
+  OS::TripleO::Compute::Net::SoftwareConfig:  ../nic-config/compute.yaml
+  OS::TripleO::ComputeHCI::Net::SoftwareConfig:  ../nic-config/computehci.yaml
+  OS::TripleO::CephStorage::Net::SoftwareConfig: ../nic-config/ceph-storage.yaml
+
+parameter_defaults:
+  ControlPlaneSubnetCidr: '24'
+  ControlPlaneDefaultRoute: 192.168.24.1
+  EC2MetadataIp: 192.168.24.1  # Generally the IP of the Undercloud
+
+  DnsServers: ["8.8.8.8","8.8.4.4"]
+  NtpServer: europe.pool.ntp.org
+  TimeZone: 'UTC'
+
+  NeutronEnableIsolatedMetadata: true
+  # DHCP always provides metadata route to VM.
+  NeutronEnableForceMetadata: true
+
+
+  # List of Neutron network types for tenant networks (will be used in order)
+  #NeutronNetworkType: 'vxlan,vlan'
+  # The tunnel type for the tenant network (vxlan or gre). Set to '' to disable tunneling.
+  NeutronTunnelTypes: 'vxlan'
+  # Neutron VLAN ranges per network, for example 'datacentre:1:499,tenant:500:1000':
+  NeutronExternalNetworkBridge: "''"
+
+  NeutronNetworkVLANRanges: 'datacentre:1:1000,baremetal:1:1000,provider:1:1000'
+  NeutronBridgeMappings: datacentre:br-data,baremetal:br-baremetal,provider:br-provider
+  NeutronFlatNetworks: datacentre,baremetal,provider
+
+  # Customize bonding options, e.g. "mode=4 lacp_rate=1 updelay=1000 miimon=100"
+  # for Linux bonds w/LACP, or "bond_mode=active-backup" for OVS active/backup.
+  BondInterfaceOvsOptions: "bond_mode=active-backup"
+
+
+
+
+
+  #NetworkDeploymentActions: ['CREATE','UPDATE']
+
+
+
+  # Predictable VIPs
+  ControlFixedIPs: [{'ip_address':'192.168.24.10'}]
+  InternalApiVirtualFixedIPs: [{'ip_address':'172.23.0.10'}]
+  PublicVirtualFixedIPs: [{'ip_address':'10.1.1.10'}]
+  StorageVirtualFixedIPs: [{'ip_address':'172.21.0.10'}]
+  StorageMgmtVirtualFixedIPs: [{'ip_address':'172.22.0.10'}]
+  RedisVirtualFixedIPs: [{'ip_address':'172.23.0.9'}]
+  BaremetalVirtualFixedIPs: [{'ip_address':'10.3.1.10'}]
+  StorageNFSVirtualFixedIPs: [{'ip_address':'172.28.0.10'}]
+
+
+
+
+  ServiceNetMap:
+    ApacheNetwork: internal_api
+    NeutronTenantNetwork: tenant
+    CeilometerApiNetwork: internal_api
+    AodhApiNetwork: internal_api
+    PankoApiNetwork: internal_api
+    BarbicanApiNetwork: internal_api
+    GnocchiApiNetwork: internal_api
+    MongodbNetwork: internal_api
+    CinderApiNetwork: internal_api
+    CinderIscsiNetwork: storage
+    CongressApiNetwork: internal_api
+    GlanceApiNetwork: internal_api
+    IronicApiNetwork: baremetal
+    IronicNetwork: baremetal
+    IronicInspectorNetwork: baremetal
+    KeystoneAdminApiNetwork: ctlplane # allows undercloud to config endpoints
+    KeystonePublicApiNetwork: internal_api
+    ManilaApiNetwork: internal_api
+    NeutronApiNetwork: internal_api
+    OctaviaApiNetwork: internal_api
+    HeatApiNetwork: internal_api
+    HeatApiCfnNetwork: internal_api
+    HeatApiCloudwatchNetwork: internal_api
+    NovaApiNetwork: internal_api
+    NovaPlacementNetwork: internal_api
+    NovaMetadataNetwork: internal_api
+    NovaVncProxyNetwork: internal_api
+    NovaLibvirtNetwork: internal_api
+    Ec2ApiNetwork: internal_api
+    Ec2ApiMetadataNetwork: internal_api
+    TackerApiNetwork: internal_api
+    SwiftStorageNetwork: storage_mgmt
+    SwiftProxyNetwork: storage
+    SaharaApiNetwork: internal_api
+    HorizonNetwork: internal_api
+    MemcachedNetwork: internal_api
+    RabbitmqNetwork: internal_api
+    QdrNetwork: internal_api
+    RedisNetwork: internal_api
+    GaneshaNetwork: storage_nfs
+    MysqlNetwork: internal_api
+    SnmpdNetwork: internal_api
+    CephClusterNetwork: storage_mgmt
+    CephMonNetwork: storage
+    CephRgwNetwork: storage
+    PublicNetwork: external
+    OpendaylightApiNetwork: internal_api
+    OvnDbsNetwork: internal_api
+    MistralApiNetwork: internal_api
+    ZaqarApiNetwork: internal_api
+    DockerRegistryNetwork: ctlplane
+    PacemakerRemoteNetwork: internal_api
+    # We special-case the default ResolveNetwork for the CephStorage role
+    # for backwards compatibility, all other roles default to internal_api
+    CephStorageHostnameResolveNetwork: storage
+    EtcdNetwork: internal_api
+
+    ControllerHostnameResolveNetwork: internal_api
+
+    ComputeHostnameResolveNetwork: internal_api
+
+    BlockStorageHostnameResolveNetwork: internal_api
+
+    ObjectStorageHostnameResolveNetwork: internal_api

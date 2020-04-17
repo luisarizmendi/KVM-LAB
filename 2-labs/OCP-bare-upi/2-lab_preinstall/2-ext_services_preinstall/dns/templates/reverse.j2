@@ -1,0 +1,24 @@
+$TTL 1W
+@	IN	SOA	ns1.{{ helper.dns.clusterid }}.{{ helper.dns.domain }}.	root (
+			{{ serialnumber }}	; serial
+			3H		; refresh (3 hours)
+			30M		; retry (30 minutes)
+			2W		; expiry (2 weeks)
+			1W )		; minimum (1 week)
+	IN	NS	ns1.{{ helper.dns.clusterid }}.{{ helper.dns.domain }}.
+;
+; syntax is "last octet" and the host must have fqdn with trailing dot
+{% for m in nodes.masters %}
+{{ m.ipaddr.split('.')[3] }}	IN	PTR	{{ m.name }}.{{ helper.dns.clusterid }}.{{ helper.dns.domain }}.
+{% endfor %}
+;
+{{ nodes.bootstrap.ipaddr.split('.')[3] }}	IN	PTR	{{ nodes.bootstrap.name }}.{{ helper.dns.clusterid }}.{{ helper.dns.domain }}.
+;
+{{ helper.vm.ipaddr.split('.')[3] }}	IN	PTR	api.{{ helper.dns.clusterid }}.{{ helper.dns.domain }}.
+{{ helper.vm.ipaddr.split('.')[3] }}	IN	PTR	api-int.{{ helper.dns.clusterid }}.{{ helper.dns.domain }}.
+;
+{% for w in nodes.workers %}
+{{ w.ipaddr.split('.')[3] }}	IN	PTR	{{ w.name }}.{{ helper.dns.clusterid }}.{{ helper.dns.domain }}.
+{% endfor %}
+;
+;EOF

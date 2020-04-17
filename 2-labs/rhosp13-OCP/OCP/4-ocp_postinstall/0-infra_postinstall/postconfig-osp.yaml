@@ -1,0 +1,14 @@
+---
+- hosts: installer
+  remote_user: stack
+
+  tasks:
+    - name: Copy script
+      copy:
+        src: run.sh
+        dest: "~/run-post.sh"
+
+    - name: Run script
+      shell: |
+        chmod +x ~/run-post.sh
+        ./run-post.sh {{ platform.openstack.externalNetwork }} {{ ingress_fip }}

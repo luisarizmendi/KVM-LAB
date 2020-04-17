@@ -1,0 +1,15 @@
+parameter_defaults:
+  KeystoneLDAPDomainEnable: true
+  KeystoneLDAPBackendConfigs:
+    osp.lablocal:
+      url: ldap://192.168.245.251
+      user: uid=admin,cn=users,cn=accounts,dc=osp,dc=lablocal
+      password: redhatstack
+      suffix: dc=osp,dc=lablocal
+      user_tree_dn: ou=people,dc=osp,dc=lablocal
+      user_filter: "(memberOf=cn=openstack-users,ou=groups,dc=osp,dc=lablocal)"
+      user_objectclass: inetUser
+      user_id_attribute: uid
+      user_allow_create: false
+      user_allow_update: false
+      user_allow_delete: false

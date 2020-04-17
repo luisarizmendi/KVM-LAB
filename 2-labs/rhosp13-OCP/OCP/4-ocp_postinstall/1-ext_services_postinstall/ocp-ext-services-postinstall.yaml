@@ -1,0 +1,13 @@
+---
+#- name: Prepare node
+#  import_playbook: node-predeploy-nosubs.yaml
+
+- name: Configure DNS
+  import_playbook:  dns/ocp-helper-dns.yaml
+
+- name: Change installer node dns resolver
+  import_playbook:  dns/change_resolver.yaml
+
+
+#  - name: Configure NFS
+#    import_playbook: nfs/ocp-helper-nfs.yaml

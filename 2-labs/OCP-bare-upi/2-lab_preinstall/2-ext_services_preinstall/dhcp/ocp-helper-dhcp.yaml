@@ -1,0 +1,35 @@
+---
+- hosts: helper
+  gather_facts: no
+
+
+  tasks:
+  - name: Install packages for DHCP
+    yum:
+      name:
+        - dhcp
+        - syslinux
+      state: present
+
+  - name: Write out dhcp file
+    template:
+      src: templates/dhcpd.conf.j2
+      dest: /etc/dhcp/dhcpd.conf
+    notify:
+      - restart dhcpd
+
+
+  - name: Starting DHCP/PXE services
+    service:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    with_items:
+      - dhcpd
+
+
+  handlers:
+  - name: restart dhcpd
+    service:
+      name: dhcpd
+      state: restarted
